@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CI Class Atlas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a reference desk. Search and ranked classes on the left rail, one class record on the right as three parallel columns, one per C. */
+:root{
+  --bg:#eef1f4; --surface:#ffffff; --sunk:#f6f8fa; --ink:#15202b; --muted:#566473; --line:#d3dae1;
+  --accent:#0b6e75; --accent-ink:#ffffff;
+  --ident:#1f5f99; --complete:#2c7a47; --correct:#a86200; --comply:#6644a3; --govern:#44505c;
+  --good:#2c7a47; --warn:#a86200; --crit:#b03a3a;
+  --display:"IBM Plex Sans Condensed","Arial Narrow",Arial,sans-serif;
+  --body:"IBM Plex Sans",-apple-system,"Segoe UI",Arial,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f151b; --surface:#17202a; --sunk:#131b23; --ink:#e4ebf1; --muted:#93a2b0; --line:#2a3744;
+    --accent:#56c4ca; --accent-ink:#05272a;
+    --ident:#7db7ec; --complete:#74c690; --correct:#e6a94a; --comply:#b79df0; --govern:#a9b6c2;
+    --good:#74c690; --warn:#e6a94a; --crit:#ef8a8a; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f151b; --surface:#17202a; --sunk:#131b23; --ink:#e4ebf1; --muted:#93a2b0; --line:#2a3744;
+  --accent:#56c4ca; --accent-ink:#05272a;
+  --ident:#7db7ec; --complete:#74c690; --correct:#e6a94a; --comply:#b79df0; --govern:#a9b6c2;
+  --good:#74c690; --warn:#e6a94a; --crit:#ef8a8a; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--body);display:grid;grid-template-rows:auto 1fr auto}
+button{font:inherit;color:inherit;cursor:pointer}
+code,.mono{font-family:var(--mono);font-size:.92em}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+header{display:flex;flex-wrap:wrap;align-items:center;gap:8px 20px;padding:12px 20px;background:var(--surface);border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand h1{font:600 22px/1 var(--display);margin:0;letter-spacing:.01em}
+.brand span{color:var(--muted);font-size:12.5px}
+.hbtns{margin-left:auto;display:flex;gap:8px}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:5px 11px;font-size:13px}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+main{display:grid;grid-template-columns:minmax(300px,380px) 1fr;min-height:0}
+.rail{display:flex;flex-direction:column;gap:10px;padding:14px 14px 0 20px;min-height:0;border-right:1px solid var(--line)}
+.search{position:relative}
+.search input{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:15px var(--body)}
+.search input:focus{border-color:var(--accent);outline:none}
+.hint{color:var(--muted);font-size:12px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--sunk);border-radius:999px;padding:2px 10px;font-size:12px}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.count{color:var(--muted);font-size:12px;display:flex;justify-content:space-between}
+#results{list-style:none;margin:0;padding:0 0 14px;overflow:auto;min-height:0;flex:1;display:flex;flex-direction:column;gap:6px}
+.res{width:100%;text-align:left;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 10px;display:grid;gap:2px;border-left:4px solid var(--line)}
+.res:hover{border-color:var(--accent)}
+.res[aria-current="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.res.Business{border-left-color:var(--comply)} .res.Application{border-left-color:var(--ident)} .res.Infrastructure{border-left-color:var(--complete)}
+.res b{font-weight:600}
+.res .mono{color:var(--muted);overflow-wrap:anywhere}
+.res .meta{display:flex;flex-wrap:wrap;gap:4px 8px;font-size:11.5px;color:var(--muted);align-items:center}
+.why{background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent);border-radius:4px;padding:0 5px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.High{background:var(--good)} .Medium{background:var(--warn)} .Low{background:var(--crit)}
+#detail{overflow:auto;min-height:0;padding:16px 20px 28px;display:flex;flex-direction:column;gap:14px}
+.idcard{background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--ident);border-radius:10px;padding:14px 16px;display:grid;gap:10px}
+.idtop{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:baseline}
+.idtop h2{font:600 26px/1.1 var(--display);margin:0;text-wrap:balance}
+.idtop .mono{font-size:14px;color:var(--ident);overflow-wrap:anywhere}
+.pills{display:flex;flex-wrap:wrap;gap:6px}
+.pill{border:1px solid var(--line);border-radius:5px;padding:1px 8px;font-size:12px;background:var(--sunk);display:inline-flex;gap:6px;align-items:center}
+.pill i{font-style:normal;color:var(--muted)}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:6px 18px;font-size:13px}
+.facts dt{color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.04em}
+.facts dd{margin:0;overflow-wrap:anywhere}
+.link{background:none;border:0;padding:0;color:var(--accent);text-decoration:underline;text-underline-offset:2px;text-align:left}
+.gate{border:1px solid var(--line);border-left:4px solid var(--govern);background:var(--surface);border-radius:8px;padding:10px 14px}
+.gate h3,.col h3{font:600 12px var(--body);text-transform:uppercase;letter-spacing:.06em;margin:0 0 4px}
+.gate h3{color:var(--govern)}
+.gate p{margin:0;font-size:15px}
+.board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:start}
+.col{background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.col>header{display:block;padding:10px 14px;border-bottom:1px solid var(--line);border-top:4px solid var(--k)}
+.col>header h3{font:600 19px var(--display);text-transform:none;letter-spacing:0;color:var(--k);margin:0}
+.col>header p{margin:0;color:var(--muted);font-size:12px}
+.complete{--k:var(--complete)} .correct{--k:var(--correct)} .comply{--k:var(--comply)}
+.sec{padding:10px 14px;border-bottom:1px solid var(--line)}
+.sec:last-child{border-bottom:0}
+.sec h4{margin:0 0 5px;font:600 11.5px var(--body);text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.sec p{margin:0 0 4px;overflow-wrap:anywhere}
+.from{font-size:11.5px;color:var(--muted);margin:6px 0 3px}
+.attrs{display:flex;flex-wrap:wrap;gap:5px}
+.attr{border:1px solid var(--line);background:var(--sunk);border-radius:5px;padding:1px 7px;display:inline-flex;gap:6px;align-items:baseline}
+.attr small{color:var(--muted);font-size:11px}
+.note{font-size:12.5px;color:var(--muted);margin:3px 0 0}
+.rel{display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;padding:5px 0;border-top:1px dashed var(--line)}
+.rel:first-of-type{border-top:0}
+.rtype{font-family:var(--mono);font-size:11.5px;color:var(--correct)}
+.tag{font-size:10.5px;border-radius:4px;padding:0 5px;border:1px solid var(--line);color:var(--muted)}
+.tag.m{border-color:var(--correct);color:var(--correct)}
+.trace{display:flex;flex-wrap:wrap;gap:4px;align-items:center;font-size:12.5px}
+.trace span{background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:0 6px}
+.trace span.me{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:600}
+.trace em{font-style:normal;font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+ul.checks{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+ul.checks li{padding-left:20px;position:relative}
+ul.checks li::before{content:"";position:absolute;left:0;top:4px;width:11px;height:11px;border:1.5px solid var(--comply);border-radius:2px}
+.wide{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+.wide h3{font:600 12px var(--body);text-transform:uppercase;letter-spacing:.06em;margin:0 0 6px;color:var(--muted)}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left;vertical-align:top}
+th{font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:600}
+tr.grp td{background:var(--sunk);font-weight:600;color:var(--k,var(--ink))}
+td.pre{white-space:pre-wrap;overflow-wrap:anywhere}
+footer{padding:7px 20px;border-top:1px solid var(--line);background:var(--surface);color:var(--muted);font-size:11.5px}
+.toast{position:fixed;bottom:44px;right:20px;background:var(--ink);color:var(--surface);padding:6px 12px;border-radius:6px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+@media (max-width:1100px){.board{grid-template-columns:1fr}}
+@media (max-width:820px){
+  html,body{height:auto} body{display:block}
+  main{display:block} .rail{border-right:0;padding:14px 16px 0} #results{max-height:46vh} #detail{padding:16px}
+}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><h1>CI Class Atlas</h1><span>CMDB class data model on CSDM 5.0, by the three C's</span></div>
+  <div class="hbtns">
+    <button class="btn" id="b-board" aria-pressed="true">Three C board</button>
+    <button class="btn" id="b-classic" aria-pressed="false">Classic row</button>
+    <button class="btn" id="b-patterns">Reference patterns</button>
+  </div>
+</header>
+<main>
+  <section class="rail" aria-label="Search">
+    <div class="search">
+      <input id="q" type="search" autocomplete="off" placeholder="Describe a CI, or type a class such as cmdb_ci_win_server" aria-label="Search classes">
+    </div>
+    <div class="hint">Try a description. Press Enter to open the best match.</div>
+    <div class="chips" id="examples"></div>
+    <div class="chips" id="filters" role="group" aria-label="Context filter"></div>
+    <div class="count"><span id="count"></span><span>confidence: <span class="dot High"></span> high <span class="dot Medium"></span> medium <span class="dot Low"></span> low</span></div>
+    <ul id="results"></ul>
+  </section>
+  <section id="detail" aria-live="polite"></section>
+</main>
+<footer>Prototype. Independent community reference, not affiliated with or endorsed by ServiceNow. Draft model: not yet validated against a live instance, so check the confidence marker and anything labelled "Verify in instance".</footer>
+<div class="toast" id="toast" role="status"></div>
+<script src="data.js"></script>
+<script>
+const D = window.DATA, C = D.classes, BY = {};
+C.forEach(c => BY[c.table] = c);
+const esc = s => String(s).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const $ = id => document.getElementById(id);
+
+/* ---------- search: weighted fields + everyday-term aliases + synonyms + typo tolerance ---------- */
+const ALIAS = {
+ cmdb_ci_cloud_object_storage:"s3 bucket blob gcs object store", cmdb_ci_cloud_database:"rds aurora azure sql cosmos managed database dbaas paas",
+ cmdb_ci_cloud_function:"lambda serverless azure functions", cmdb_ci_cloud_service_account:"aws account azure subscription gcp project tenant billing account",
+ cmdb_ci_logical_datacenter:"region cloud region", cmdb_ci_aws_datacenter:"aws region amazon", cmdb_ci_azure_datacenter:"azure region microsoft", cmdb_ci_gcp_datacenter:"gcp region google cloud",
+ cmdb_ci_vm_instance:"vm virtual machine instance cloud server compute azure vm gce", cmdb_ci_ec2_instance:"ec2 aws vm amazon instance",
+ cmdb_ci_vpc:"vpc vnet virtual network", cmdb_ci_network:"vnet virtual network cloud network", cmdb_ci_compute_security_group:"security group nsg firewall rules",
+ cmdb_ci_cloud_load_balancer:"elb alb nlb application gateway cloud lb", cmdb_ci_cloud_storage_account:"storage account azure storage",
+ cmdb_ci_cloud_messaging_service:"sqs sns service bus event hub pubsub queue topic", cmdb_ci_dynamodb_table:"dynamodb nosql table",
+ cmdb_ci_resource_group:"azure resource group rg", cmdb_ci_os_template:"ami machine image vm image", cmdb_ci_cloud_ecs_cluster:"ecs fargate container cluster",
+ cmdb_ci_service_auto:"application service app service service instance deployed application environment instance",
+ cmdb_ci_service_discovered:"mapped application service service map top down", cmdb_ci_service_by_tags:"tag based service tags labels",
+ cmdb_ci_service_calculated:"calculated application service", cmdb_ci_query_based_service:"dynamic ci group dcg cmdb group query",
+ cmdb_ci_service_technical:"technical service technology management service", cmdb_ci_service_business:"business service", service_offering:"service offering business service offering technical service offering technology management offering",
+ cmdb_ci_business_app:"business application app portfolio apm application portfolio", cmdb_ci_business_capability:"business capability capability map",
+ cmdb_ci_information_object:"information object data object data classification", cmdb_ci_pc_hardware:"laptop desktop workstation pc notebook macbook end user device",
+ cmdb_ci_handheld_computing:"mobile phone tablet smartphone ipad", cmdb_ci_server:"server host machine", cmdb_ci_win_server:"windows server windows machine windows host",
+ cmdb_ci_linux_server:"linux server rhel ubuntu centos suse linux host", cmdb_ci_esx_server:"esxi hypervisor vmware host", cmdb_ci_vmware_instance:"vmware vm vsphere virtual machine",
+ cmdb_ci_vcenter:"vcenter vsphere", cmdb_ci_ip_switch:"switch network switch", cmdb_ci_ip_router:"router", cmdb_ci_ip_firewall:"firewall palo alto fortigate checkpoint",
+ cmdb_ci_wap_network:"wifi access point wireless ap", cmdb_ci_lb:"load balancer f5 adc", cmdb_ci_lb_service:"vip virtual server load balancer vip", cmdb_ci_lb_pool:"lb pool server farm",
+ cmdb_ci_db_instance:"database instance database server dbms", cmdb_ci_db_mssql_instance:"sql server mssql microsoft sql", cmdb_ci_db_ora_instance:"oracle database oracle db",
+ cmdb_ci_db_postgresql_instance:"postgres postgresql", cmdb_ci_db_mysql_instance:"mysql mariadb", cmdb_ci_db_mongodb_instance:"mongo mongodb", cmdb_ci_db_catalog:"database schema catalog",
+ cmdb_ci_app_server_tomcat:"tomcat", cmdb_ci_microsoft_iis_web_server:"iis", cmdb_ci_apache_web_server:"apache httpd", cmdb_ci_nginx_web_server:"nginx",
+ cmdb_ci_certificate:"ssl tls certificate cert x509", cmdb_ci_kubernetes_cluster:"k8s cluster aks eks gke openshift", cmdb_ci_kubernetes_pod:"pod", cmdb_ci_kubernetes_namespace:"namespace",
+ cmdb_ci_kubernetes_deployment:"deployment workload", cmdb_ci_docker:"docker container", cmdb_ci_docker_image:"container image", cmdb_ci_storage_device:"storage array san array",
+ cmdb_ci_nas_file_system:"nas share nfs", cmdb_ci_rack:"rack cabinet", cmdb_ci_datacenter:"data centre data center site", cmdb_ci_printer:"printer",
+ cmdb_ci_circuit:"wan circuit mpls leased line internet link", cmdb_ci_ot_plc:"plc controller", cmdb_ci_iot:"iot sensor", cmdb_ci_api:"api rest endpoint", cmdb_ci_ip_address:"ip address",
+ cmdb_ci_network_adapter:"nic network card network interface", cmdb_ci_file_system:"filesystem mount drive", cmdb_ci_spkg:"software package installed software", cmdb_ci_cluster:"failover cluster ha cluster",
+ cmdb_ci_ad_controller:"domain controller active directory dc", cmdb_ci_email_server:"mail server exchange smtp"
+};
+const SYN = {vm:"virtual machine",vms:"virtual machine",k8s:"kubernetes",kube:"kubernetes",db:"database",lb:"load balancer",fw:"firewall",ad:"active directory",
+ host:"server",machine:"server",box:"server",app:"application",svc:"service",cert:"certificate",ssl:"certificate",tls:"certificate",postgres:"postgresql",mongo:"mongodb",
+ sql:"mssql",hypervisor:"esx virtualization",wifi:"wireless",container:"docker",website:"web site",webserver:"web server",saas:"business application service instance",
+ azure:"cloud",aws:"cloud",gcp:"cloud",amazon:"aws cloud",google:"gcp cloud",microsoft:"azure",storage:"storage",mainframe:"mainframe",laptop:"personal computer",desktop:"personal computer"};
+const STOP = new Set("a an the in on of for to and or with that which is are my our we i have has want need how what where running runs hosted hosting class ci cmdb table called named some any it this by from at as into used using".split(" "));
+const norm = t => (t.length > 3 && t.endsWith("s") && !t.endsWith("ss")) ? t.slice(0,-1) : t;
+const tokenize = s => String(s).toLowerCase().split(/[^a-z0-9.]+/).filter(Boolean).map(norm);
+const CLOUDISH = "cloud";
+const df = new Map();
+C.forEach(c => {
+  const ix = new Map();
+  const add = (text, w, f) => tokenize(text).forEach(t => { const e = ix.get(t); if (!e || e.w < w) ix.set(t, {w, f}); });
+  add(c.label, 6, "name"); add(c.table.replace(/^cmdb_ci_/, "").replace(/_/g, " "), 5, "table"); add(ALIAS[c.table] || "", 5, "also known as");
+  add(c.cat, 3, "category"); add(c.ctx + " " + c.domain + " " + c.batch + (c.batch.includes("cloud") ? " " + CLOUDISH : ""), 1.5, "context");
+  add(c.source, 1, "source"); add(c.csdm + " " + c.notes, .4, "notes");
+  c._ix = ix; ix.forEach((_, t) => df.set(t, (df.get(t) || 0) + 1));
+});
+const idf = t => Math.log(1 + C.length / (1 + (df.get(t) || 3)));
+function within1(a, b){ // edit distance <= 1
+  if (a === b) return true; const la = a.length, lb = b.length; if (Math.abs(la - lb) > 1) return false;
+  let i = 0, j = 0, d = 0;
+  while (i < la && j < lb){ if (a[i] === b[j]) { i++; j++; continue; } if (++d > 1) return false; if (la > lb) i++; else if (lb > la) j++; else { i++; j++; } }
+  return d + (la - i) + (lb - j) <= 1;
+}
+function search(q, ctx){
+  const raw = q.trim().toLowerCase(), pool = C.filter(c => ctx === "All" || c.ctx === ctx);
+  if (!raw) return pool.map(c => ({c, s: 0, why: []})).sort((a, b) => (b.c.principal === "Y") - (a.c.principal === "Y"));
+  const toks = tokenize(raw).filter(t => !STOP.has(t)), tableish = raw.replace(/\s+/g, "_"), exp = [];
+  toks.forEach(t => { exp.push([t, 1, t]); if (SYN[t]) tokenize(SYN[t]).forEach(x => exp.push([x, .7, t])); });
+  const out = [];
+  for (const c of pool){
+    const hit = new Map();
+    for (const [t, w, orig] of exp){
+      let best = 0, f = ""; const e = c._ix.get(t);
+      if (e) { best = e.w; f = e.f; }
+      else if (t.length >= 3) for (const [k, e2] of c._ix){
+        let m = 0;
+        if (k.startsWith(t) || (k.length >= 4 && t.startsWith(k))) m = .6; else if (t.length >= 5 && within1(k, t)) m = .45;
+        if (m && e2.w * m > best) { best = e2.w * m; f = e2.f; }
+      }
+      if (best){ const sc = best * w * idf(t), h = hit.get(orig); if (!h || sc > h.s) hit.set(orig, {s: sc, f}); }
+    }
+    let s = 0; hit.forEach(h => s += h.s);
+    const cov = toks.length ? hit.size / toks.length : 0; s *= .35 + .65 * cov * cov;
+    if (c.table === tableish || c.table === "cmdb_ci_" + tableish) s += 1000; else if (tableish.length >= 5 && c.table.includes(tableish)) s += 60;
+    if (c.principal === "Y") s *= 1.1;
+    if (c.notes.includes("Abstract or holding class")) s *= .8;
+    if (s > 0) out.push({c, s, why: [...hit.entries()].map(([k, v]) => k + " in " + v.f)});
+  }
+  return out.sort((a, b) => b.s - a.s).slice(0, 60);
+}
+
+/* ---------- state ---------- */
+let state = {q: "", ctx: "All", sel: "cmdb_ci_win_server", view: "board", list: []};
+const toHash = t => t.replace(/_/g, "-"), fromHash = h => h.replace(/^#/, "").replace(/-/g, "_");
+
+function renderList(){
+  state.list = search(state.q, state.ctx);
+  $("count").textContent = state.q.trim() ? state.list.length + " matches, best first" : state.list.length + " classes";
+  $("results").innerHTML = state.list.map(r => `<li><button class="res ${esc(r.c.ctx)}" data-t="${esc(r.c.table)}" aria-current="${r.c.table === state.sel}">
+    <b>${esc(r.c.label)}</b><span class="mono">${esc(r.c.table)}</span>
+    <span class="meta"><span class="dot ${esc(r.c.conf)}" title="Confidence: ${esc(r.c.conf)}"></span>${esc(r.c.ctx)} &middot; ${esc(r.c.cat)}${r.why.slice(0, 3).map(w => ` <span class="why">${esc(w)}</span>`).join("")}</span></button></li>`).join("")
+    || `<li class="hint">No class matches. Try fewer words, or a product name such as "tomcat" or "s3".</li>`;
+}
+
+/* ---------- detail ---------- */
+const clsLink = t => BY[t] ? `<button class="link" data-t="${esc(t)}">${esc(BY[t].label)}</button>` : esc(t);
+function resolve(c, field, seen = new Set()){ // expand "Inherits from X [t]" through the parent chain
+  const lines = String(c[field]).split("\n"), m = /^Inherits from .*\[([a-z0-9_]+)\]/.exec(lines[0]);
+  if (!m || !BY[m[1]] || seen.has(m[1])) return [{from: null, items: lines}];
+  seen.add(m[1]);
+  const up = resolve(BY[m[1]], field, seen).map(g => ({from: g.from || BY[m[1]].label, items: g.items}));
+  if (lines.length > 1) up.push({from: null, items: lines.slice(1)});
+  return up;
+}
+function attrGroups(c, field){
+  return resolve(c, field).map(g => {
+    const attrs = g.items.filter(i => /^[a-z_]+$/.test(i)), notes = g.items.filter(i => !/^[a-z_]+$/.test(i));
+    return (g.from ? `<div class="from">Inherited from ${esc(g.from)}</div>` : "") +
+      (attrs.length ? `<div class="attrs">${attrs.map(a => { const d = D.attrs[a]; return `<span class="attr" title="${d ? esc(d[3]) + " (" + esc(d[1]) + ", " + esc(d[2]) + ")" : ""}"><code>${esc(a)}</code>${d ? `<small>${esc(d[0])}</small>` : ""}</span>`; }).join("")}</div>` : "") +
+      notes.map(n => `<p class="note">${esc(n)}</p>`).join("");
+  }).join("");
+}
+function identRule(c, seen = new Set()){
+  const m = /^Inherits the identification rule of .*\[([a-z0-9_]+)\]/.exec(c.ident);
+  if (m && BY[m[1]] && !seen.has(m[1])) { seen.add(m[1]); return `<div class="from">Inherited from ${esc(BY[m[1]].label)}, unless a class-specific rule is active</div>` + identRule(BY[m[1]], seen); }
+  return `<p>${esc(c.ident)}</p>`;
+}
+const REL = /^(.*?) \[([a-z0-9_]+)\] -> (.+?) -> (.*?) \[([a-z0-9_]+)\] \((.*)\)$/;
+function relLines(text){
+  return String(text).split("\n").map(l => { const m = REL.exec(l);
+    return m ? `<div class="rel">${clsLink(m[2])}<span class="rtype">${esc(m[3])}</span>${clsLink(m[5])}<span class="tag ${m[6].startsWith("Mandatory") ? "m" : ""}">${esc(m[6])}</span></div>` : `<p class="note">${esc(l)}</p>`; }).join("");
+}
+function trace(c){
+  return `<div class="trace">` + c.trace.split(" -> ").map((seg, i) => {
+    if (seg.includes("::") || /^(svc_ci_assoc|parent \(reference\)|\(.*\))$/.test(seg)) return `<em>${esc(seg)}</em>`;
+    return (i ? `<em>&rarr;</em>` : "") + `<span class="${seg === c.label ? "me" : ""}">${esc(seg)}</span>`; }).join("") + `</div>`;
+}
+const sec = (h, body) => `<div class="sec"><h4>${h}</h4>${body}</div>`;
+const para = t => `<p>${esc(t)}</p>`;
+function board(c){
+  return `<div class="board">
+  <section class="col complete"><header><h3>Completeness</h3><p>Which attributes must be filled</p></header>
+    ${sec("Required attributes", attrGroups(c, "req"))}${sec("Recommended attributes", attrGroups(c, "rec"))}
+    ${sec("Ownership", attrGroups(c, "own"))}${sec("Life cycle", attrGroups(c, "life"))}${sec("Class-specific keys", attrGroups(c, "key"))}</section>
+  <section class="col correct"><header><h3>Correctness</h3><p>Unique, connected to all three contexts, and current</p></header>
+    ${sec("Identification rule", identRule(c))}${sec("Upstream, towards business", relLines(c.up))}${sec("Downstream, towards infrastructure", relLines(c.down))}
+    ${sec("Three-context trace", trace(c))}${sec("Hosting / containment", para(c.host))}${sec("Orphan rule", para(c.orphan))}${sec("Staleness rule", para(c.stale))}${sec("Duplicate risk", para(c.dup))}</section>
+  <section class="col comply"><header><h3>Compliance</h3><p>What an audit checks</p></header>
+    ${sec("Audit checks", `<ul class="checks">${c.audit.replace(/\.$/, "").split("; ").map(x => `<li>${esc(x)}</li>`).join("")}</ul>`)}
+    ${sec("CSDM 5.0 check", para(c.csdm))}${sec("Certification", para(c.cert))}</section></div>`;
+}
+const FIELDS = [["Identity","ident",[["ctx","Context"],["domain","CSDM 5.0 domain"],["cat","Category"],["label","Class label"],["table","Table name"],["parent","Parent class (extends)"],["shipped","Shipped by"],["dep","Independent or dependent class"],["principal","Principal class (Y/N)"],["source","Typical population source"]]],
+ ["Completeness","complete",[["req","Required attributes"],["rec","Recommended attributes"],["own","Ownership attributes"],["life","Lifecycle attributes"],["key","Class-specific key attributes"]]],
+ ["Correctness","correct",[["ident","Identification rule"],["up","Mandatory upstream relationship"],["down","Mandatory downstream relationship"],["host","Hosting / containment rule"],["trace","Three-context trace path"],["orphan","Orphan rule"],["stale","Staleness rule"],["dup","Duplicate risk and reconciliation note"]]],
+ ["Compliance","comply",[["audit","Audit / desired-state checks"],["csdm","CSDM 5.0 compliance check"],["cert","Certification owner and frequency"]]],
+ ["Governance","govern",[["gate","Onboarding gate"],["notes","Notes and assumptions"],["conf","Confidence"]]]];
+function classic(c){
+  return `<div class="wide"><h3>Workbook row, as on the Class Data Model sheet</h3><div class="scroll"><table><tbody>` +
+    FIELDS.map(([g, k, fs]) => `<tr class="grp" style="--k:var(--${k})"><td colspan="2">${g}</td></tr>` + fs.map(([f, n]) => `<tr><th scope="row">${n}</th><td class="pre">${esc(c[f])}</td></tr>`).join("")).join("") + `</tbody></table></div></div>`;
+}
+function relTable(c){
+  const rows = D.rels.filter(r => r[0] === c.table || r[2] === c.table);
+  if (!rows.length) return "";
+  return `<div class="wide"><h3>Relationship matrix entries for this class (${rows.length})</h3><div class="scroll"><table><thead><tr><th>Parent</th><th>Relationship type</th><th>Child</th><th>Direction</th><th>Required</th><th>Created by</th></tr></thead><tbody>` +
+    rows.map(r => `<tr><td>${clsLink(r[0])}</td><td class="mono">${esc(r[1])}</td><td>${clsLink(r[2])}</td><td>${esc(r[3])}</td><td>${esc(r[4])}</td><td>${esc(r[5])}</td></tr>`).join("") + `</tbody></table></div></div>`;
+}
+function renderDetail(){
+  if (state.sel === "patterns"){
+    $("detail").innerHTML = `<div class="idcard"><div class="idtop"><h2>Reference patterns</h2></div><p style="margin:0;color:var(--muted)">Seven end-to-end chains from Business Application down to the lowest infrastructure CI.</p></div>` +
+      D.patterns.map(p => `<div class="wide"><h3>${esc(p[0])}</h3><p style="margin:0 0 6px">${esc(p[1])}</p><div class="trace">${p[5].split(" -> ").map((s, i) => s.includes("::") || s === "svc_ci_assoc" ? `<em>${esc(s)}</em>` : (i ? `<em>&rarr;</em>` : "") + `<span>${esc(s)}</span>`).join("")}</div><p class="note">Populated by: ${esc(p[6])}</p><p class="note">${esc(p[7])}</p></div>`).join("");
+    return;
+  }
+  const c = BY[state.sel]; if (!c) return;
+  const p = c.p;
+  $("detail").innerHTML = `<div class="idcard">
+    <div class="idtop"><h2>${esc(c.label)}</h2><span class="mono">${esc(c.table)}</span><button class="btn" id="copy">Copy row as JSON</button></div>
+    <div class="pills"><span class="pill"><i>Context</i>${esc(c.ctx)}</span><span class="pill"><i>CSDM 5.0 domain</i>${esc(c.domain)}</span><span class="pill"><i>Category</i>${esc(c.cat)}</span>
+      <span class="pill"><span class="dot ${esc(c.conf)}"></span><i>Confidence</i>${esc(c.conf)}</span>${c.principal === "Y" ? `<span class="pill">Principal class</span>` : ""}<span class="pill">${esc(c.dep)}</span></div>
+    <dl class="facts"><div><dt>Extends</dt><dd>${BY[p] ? clsLink(p) + ` <span class="mono">${esc(p)}</span>` : `<span class="mono">${esc(c.parent)}</span>`}</dd></div>
+      <div><dt>Shipped by</dt><dd>${esc(c.shipped)}</dd></div><div><dt>Populated by</dt><dd>${esc(c.source)}</dd></div></dl></div>
+    <div class="gate"><h3>Onboarding gate</h3><p>${esc(c.gate)}</p></div>
+    ${state.view === "board" ? board(c) : classic(c)}
+    <div class="wide"><h3>Notes and assumptions</h3>${c.notes.split("\n").map(n => `<p class="note" style="font-size:13.5px">${esc(n)}</p>`).join("")}</div>
+    ${relTable(c)}`;
+}
+function select(t, scroll){
+  state.sel = t; renderDetail();
+  document.querySelectorAll(".res").forEach(b => b.setAttribute("aria-current", b.dataset.t === t));
+  try { history.replaceState(null, "", "#" + toHash(t)); } catch (e) { try { location.hash = toHash(t); } catch (e2) {} }
+  $("detail").scrollTop = 0;
+  if (scroll && window.matchMedia("(max-width:820px)").matches) $("detail").scrollIntoView({behavior: "smooth"});
+}
+function toast(msg){ const t = $("toast"); t.textContent = msg; t.classList.add("on"); setTimeout(() => t.classList.remove("on"), 1600); }
+
+/* ---------- wiring ---------- */
+const EX = ["windows vm in azure", "s3 bucket", "load balancer vip", "application service", "kubernetes workload", "laptop", "cmdb_ci_db_mssql_instance"];
+$("examples").innerHTML = EX.map(e => `<button class="chip" data-q="${esc(e)}">${esc(e)}</button>`).join("");
+$("filters").innerHTML = ["All", "Business", "Application", "Infrastructure"].map(f => `<button class="chip" data-f="${f}" aria-pressed="${f === "All"}">${f}</button>`).join("");
+let timer;
+$("q").addEventListener("input", e => { clearTimeout(timer); timer = setTimeout(() => { state.q = e.target.value; renderList(); }, 90); });
+$("q").addEventListener("keydown", e => { if (e.key === "Enter") { clearTimeout(timer); state.q = e.target.value; renderList(); if (state.list[0]) select(state.list[0].c.table, true); } });
+$("examples").addEventListener("click", e => { const b = e.target.closest("[data-q]"); if (!b) return; $("q").value = state.q = b.dataset.q; renderList(); if (state.list[0]) select(state.list[0].c.table, true); });
+$("filters").addEventListener("click", e => { const b = e.target.closest("[data-f]"); if (!b) return; state.ctx = b.dataset.f;
+  document.querySelectorAll("#filters .chip").forEach(x => x.setAttribute("aria-pressed", x === b)); renderList(); });
+$("results").addEventListener("click", e => { const b = e.target.closest("[data-t]"); if (b) select(b.dataset.t, true); });
+$("detail").addEventListener("click", e => {
+  const b = e.target.closest("[data-t]"); if (b) return select(b.dataset.t, false);
+  if (e.target.id === "copy"){ const c = BY[state.sel], o = {}; Object.keys(c).filter(k => k[0] !== "_" && k !== "p").forEach(k => o[k] = c[k]);
+    try { navigator.clipboard.writeText(JSON.stringify(o, null, 2)).then(() => toast("Row copied"), () => toast("Copy was blocked by the browser")); } catch (err) { toast("Copy was blocked by the browser"); } }
+});
+function setView(v){ state.view = v; $("b-board").setAttribute("aria-pressed", v === "board"); $("b-classic").setAttribute("aria-pressed", v === "classic");
+  if (state.sel === "patterns") state.sel = "cmdb_ci_win_server"; renderDetail(); }
+$("b-board").addEventListener("click", () => setView("board"));
+$("b-classic").addEventListener("click", () => setView("classic"));
+$("b-patterns").addEventListener("click", () => select("patterns", true));
+function fromLocation(){ const h = fromHash(location.hash || ""); if (h === "patterns" || BY[h]) { state.sel = h; renderDetail(); renderList(); } }
+window.addEventListener("hashchange", fromLocation);
+renderList(); renderDetail(); fromLocation();
+</script>
+</body>
+</html>
