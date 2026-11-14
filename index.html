@@ -79,6 +79,9 @@ main{display:grid;grid-template-columns:minmax(300px,380px) 1fr;min-height:0}
 .facts dt{color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.04em}
 .facts dd{margin:0;overflow-wrap:anywhere}
 .link{background:none;border:0;padding:0;color:var(--accent);text-decoration:underline;text-underline-offset:2px;text-align:left}
+.about{background:color-mix(in srgb,var(--accent) 9%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 35%,var(--line));border-radius:8px;padding:12px 16px;display:grid;gap:3px}
+.about h3{font:600 12px var(--body);text-transform:uppercase;letter-spacing:.06em;margin:0;color:var(--accent)}
+.about p{margin:0;font:500 19px/1.35 var(--display);max-width:70ch;text-wrap:balance}
 .gate{border:1px solid var(--line);border-left:4px solid var(--govern);background:var(--surface);border-radius:8px;padding:10px 14px}
 .gate h3,.col h3{font:600 12px var(--body);text-transform:uppercase;letter-spacing:.06em;margin:0 0 4px}
 .gate h3{color:var(--govern)}
@@ -204,7 +207,7 @@ C.forEach(c => {
   const add = (text, w, f) => tokenize(text).forEach(t => { const e = ix.get(t); if (!e || e.w < w) ix.set(t, {w, f}); });
   add(c.label, 6, "name"); add(c.table.replace(/^cmdb_ci_/, "").replace(/_/g, " "), 5, "table"); add(ALIAS[c.table] || "", 5, "also known as");
   add(c.cat, 3, "category"); add(c.ctx + " " + c.domain + " " + c.batch + (c.batch.includes("cloud") ? " " + CLOUDISH : ""), 1.5, "context");
-  add(c.source, 1, "source"); add(c.csdm + " " + c.notes, .4, "notes");
+  add(c.desc, 1.5, "description"); add(c.source, 1, "source"); add(c.csdm + " " + c.notes, .4, "notes");
   c._ix = ix; ix.forEach((_, t) => df.set(t, (df.get(t) || 0) + 1));
 });
 const idf = t => Math.log(1 + C.length / (1 + (df.get(t) || 3)));
@@ -302,7 +305,7 @@ function board(c){
     ${sec("Audit checks", `<ul class="checks">${c.audit.replace(/\.$/, "").split("; ").map(x => `<li>${esc(x)}</li>`).join("")}</ul>`)}
     ${sec("CSDM 5.0 check", para(c.csdm))}${sec("Certification", para(c.cert))}</section></div>`;
 }
-const FIELDS = [["Identity","ident",[["ctx","Context"],["domain","CSDM 5.0 domain"],["cat","Category"],["label","Class label"],["table","Table name"],["parent","Parent class (extends)"],["shipped","Shipped by"],["dep","Independent or dependent class"],["principal","Principal class (Y/N)"],["source","Typical population source"]]],
+const FIELDS = [["Identity","ident",[["desc","Description"],["ctx","Context"],["domain","CSDM 5.0 domain"],["cat","Category"],["label","Class label"],["table","Table name"],["parent","Parent class (extends)"],["shipped","Shipped by"],["dep","Independent or dependent class"],["principal","Principal class (Y/N)"],["source","Typical population source"]]],
  ["Completeness","complete",[["req","Required attributes"],["rec","Recommended attributes"],["own","Ownership attributes"],["life","Lifecycle attributes"],["key","Class-specific key attributes"]]],
  ["Correctness","correct",[["ident","Identification rule"],["up","Mandatory upstream relationship"],["down","Mandatory downstream relationship"],["host","Hosting / containment rule"],["trace","Three-context trace path"],["orphan","Orphan rule"],["stale","Staleness rule"],["dup","Duplicate risk and reconciliation note"]]],
  ["Compliance","comply",[["audit","Audit / desired-state checks"],["csdm","CSDM 5.0 compliance check"],["cert","Certification owner and frequency"]]],
@@ -331,6 +334,7 @@ function renderDetail(){
       <span class="pill"><span class="dot ${esc(c.conf)}"></span><i>Confidence</i>${esc(c.conf)}</span>${c.principal === "Y" ? `<span class="pill">Principal class</span>` : ""}<span class="pill">${esc(c.dep)}</span></div>
     <dl class="facts"><div><dt>Extends</dt><dd>${BY[p] ? clsLink(p) + ` <span class="mono">${esc(p)}</span>` : `<span class="mono">${esc(c.parent)}</span>`}</dd></div>
       <div><dt>Shipped by</dt><dd>${esc(c.shipped)}</dd></div><div><dt>Populated by</dt><dd>${esc(c.source)}</dd></div></dl></div>
+    <div class="about"><h3>What it is</h3><p>${esc(c.desc)}</p></div>
     <div class="gate"><h3>Onboarding gate</h3><p>${esc(c.gate)}</p></div>
     ${state.view === "board" ? board(c) : classic(c)}
     <div class="wide"><h3>Notes and assumptions</h3>${c.notes.split("\n").map(n => `<p class="note" style="font-size:13.5px">${esc(n)}</p>`).join("")}</div>

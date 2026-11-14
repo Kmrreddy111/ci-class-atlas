@@ -4,6 +4,7 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 from model import *
+from descs import DESC
 
 OUT = sys.argv[1]
 
@@ -18,6 +19,7 @@ for bi, (title, ctx, domain, defcat, text) in enumerate(BATCHES, 1):
                  cat=cat or defcat, ctx=ctx, domain=domain, batch=bi, batch_title=title)
         ROWS.append(r); INV[t] = r
 assert len(ROWS) == 322, len(ROWS)
+assert set(DESC) == set(INV), (set(INV)-set(DESC), set(DESC)-set(INV))
 
 def lbl(t):
     if t in INV: return INV[t]["label"]
@@ -350,7 +352,7 @@ if len(sys.argv) > 2:
             "req","rec","own","life","key","ident","up","down","host","trace","orphan","stale","dup",
             "audit","csdm","cert","gate","notes","conf"]
     data = dict(
-        classes=[dict(zip(keys, rec["cells"]), batch=rec["r"]["batch_title"], p=rec["r"]["parent"]) for rec in RECS],
+        classes=[dict(zip(keys, rec["cells"]), batch=rec["r"]["batch_title"], p=rec["r"]["parent"], desc=DESC[rec["r"]["table"]]) for rec in RECS],
         rels=[r[1:3] + [r[4]] + r[5:] for r in rel_rows],
         attrs={a[0]: a[1:5] for a in attr_rows},
         patterns=PATTERNS)
