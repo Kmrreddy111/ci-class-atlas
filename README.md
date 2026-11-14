@@ -29,4 +29,6 @@ python -c "open('../data.js','w').write('window.DATA='+open('data.json').read()+
 
 Independent community reference. Not affiliated with or endorsed by ServiceNow. ServiceNow, CSDM and related names are trademarks of ServiceNow, Inc.
 
-No licence has been chosen yet; until one is added, all rights are reserved by the author.
+## Licence
+
+Code is licensed under Apache 2.0 (`LICENSE`). The data model and workbook are licensed under CC BY 4.0 (`LICENSE-DATA.md`).
