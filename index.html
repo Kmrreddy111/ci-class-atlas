@@ -156,7 +156,7 @@ footer{padding:7px 20px;border-top:1px solid var(--line);background:var(--surfac
 </main>
 <footer>Prototype. Independent community reference, not affiliated with or endorsed by ServiceNow. Draft model: not yet validated against a live instance, so check the confidence marker and anything labelled "Verify in instance".</footer>
 <div class="toast" id="toast" role="status"></div>
-<script src="data.js"></script>
+<script src="atlas-data-v2.js"></script>
 <script>
 const D = window.DATA, C = D.classes, BY = {};
 C.forEach(c => BY[c.table] = c);
@@ -207,7 +207,7 @@ C.forEach(c => {
   const add = (text, w, f) => tokenize(text).forEach(t => { const e = ix.get(t); if (!e || e.w < w) ix.set(t, {w, f}); });
   add(c.label, 6, "name"); add(c.table.replace(/^cmdb_ci_/, "").replace(/_/g, " "), 5, "table"); add(ALIAS[c.table] || "", 5, "also known as");
   add(c.cat, 3, "category"); add(c.ctx + " " + c.domain + " " + c.batch + (c.batch.includes("cloud") ? " " + CLOUDISH : ""), 1.5, "context");
-  add(c.desc, 1.5, "description"); add(c.source, 1, "source"); add(c.csdm + " " + c.notes, .4, "notes");
+  add(c.desc || "", 1.5, "description"); add(c.source, 1, "source"); add(c.csdm + " " + c.notes, .4, "notes");
   c._ix = ix; ix.forEach((_, t) => df.set(t, (df.get(t) || 0) + 1));
 });
 const idf = t => Math.log(1 + C.length / (1 + (df.get(t) || 3)));
@@ -334,7 +334,7 @@ function renderDetail(){
       <span class="pill"><span class="dot ${esc(c.conf)}"></span><i>Confidence</i>${esc(c.conf)}</span>${c.principal === "Y" ? `<span class="pill">Principal class</span>` : ""}<span class="pill">${esc(c.dep)}</span></div>
     <dl class="facts"><div><dt>Extends</dt><dd>${BY[p] ? clsLink(p) + ` <span class="mono">${esc(p)}</span>` : `<span class="mono">${esc(c.parent)}</span>`}</dd></div>
       <div><dt>Shipped by</dt><dd>${esc(c.shipped)}</dd></div><div><dt>Populated by</dt><dd>${esc(c.source)}</dd></div></dl></div>
-    <div class="about"><h3>What it is</h3><p>${esc(c.desc)}</p></div>
+    ${c.desc ? `<div class="about"><h3>What it is</h3><p>${esc(c.desc)}</p></div>` : ""}
     <div class="gate"><h3>Onboarding gate</h3><p>${esc(c.gate)}</p></div>
     ${state.view === "board" ? board(c) : classic(c)}
     <div class="wide"><h3>Notes and assumptions</h3>${c.notes.split("\n").map(n => `<p class="note" style="font-size:13.5px">${esc(n)}</p>`).join("")}</div>

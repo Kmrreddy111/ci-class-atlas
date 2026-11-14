@@ -8,9 +8,9 @@ A searchable reference data model for ServiceNow CMDB CI classes on CSDM 5.0, or
 
 | Path | Contents |
 |---|---|
-| `index.html`, `data.js` | The static site. Search by description or table name; each class opens as a three C board or as the classic workbook row. |
+| `index.html`, `atlas-data-v2.js` | The static site. Search by description or table name; each class opens as a three C board or as the classic workbook row. |
 | `workbook/CMDB_Class_Data_Model_CSDM5.xlsx` | The same model as an Excel workbook: 322 classes, relationship matrix, reference patterns, attribute dictionary, open items. |
-| `source/model.py`, `source/build.py` | The model as data and the script that generates the workbook and `data.js`. |
+| `source/model.py`, `source/build.py` | The model as data and the script that generates the workbook and the site data file. |
 
 ## Status: draft
 
@@ -22,7 +22,7 @@ This model has **not been validated against a live instance**. Every class carri
 cd source
 pip install openpyxl
 python build.py ../workbook/CMDB_Class_Data_Model_CSDM5.xlsx data.json
-python -c "open('../data.js','w').write('window.DATA='+open('data.json').read()+';')"
+python -c "open('../atlas-data-v2.js','w').write('window.DATA='+open('data.json').read()+';')"
 ```
 
 ## Notice

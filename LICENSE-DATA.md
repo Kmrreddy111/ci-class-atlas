@@ -1,6 +1,6 @@
 # Data licence
 
-The data model in this repository (the class definitions in `source/model.py`, the generated `data.js`, and the workbook in `workbook/`) is licensed under the
+The data model in this repository (the class definitions in `source/model.py`, the generated `atlas-data-v2.js`, and the workbook in `workbook/`) is licensed under the
 Creative Commons Attribution 4.0 International licence (CC BY 4.0).
 
 Full text: https://creativecommons.org/licenses/by/4.0/legalcode
